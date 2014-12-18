@@ -2,13 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "../cgi-util/cgi-util.h"
+#include <err.h>
 
+#include "../cgi-util/cgi-util.h"
 
 #include "../common/define.h"
 #include "../common/lot.h"
 #include "../common/reposetory.h"
 #include "../common/DocumentIndex.h"
+#include "../common/doc_cache.h"
 
 #ifdef BLACK_BOX
 	#define URL_EXPIRE_TIME 3600
@@ -17,11 +19,8 @@
 int main(int argc, char *argv[]) {
 
 	int res;
-	int i;
-	char FilePath[255];
-	FILE *REPOSETORY;
 	char *htmlBuf;
-	unsigned int htmlBufSize;
+	uLong htmlBufSize;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
         char *aclbuffer_allow = NULL;
         char *aclbuffer_deny = NULL;
@@ -73,9 +72,6 @@ int main(int argc, char *argv[]) {
 
 	}
 	else if (argc > 2) {
-		//iPointer = 9695;
-		//iSize = 2288;
-		//LotNr = 14;
 #ifdef BLACK_BOX
 		validate_url = false;
 #endif
@@ -111,23 +107,16 @@ int main(int argc, char *argv[]) {
 	DIRead_fmode (&DocumentIndexPost,iDocID,subname, 's');
 
 
+	if (rReadHtml(&htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
 
-	htmlBufSize = (DocumentIndexPost.htmlSize2 * 30);
-	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {
-		printf("can't malloc space for html buff.\n");
-		exit(1);		
-	}
-
-
-	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
-
-		printf("can't read cache file.\n");
-
+		printf("Can't read cache file.\n");
 	}
 	else {
-		//printf(htmlBuf);
 		fwrite(htmlBuf,htmlBufSize,1,stdout);
 	}
 
 	free(htmlBuf);
+
+
+	return 1;
 }
